@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from itertools import izip_longest
+
 
 class SimpleTable(object):
     """
@@ -20,29 +22,20 @@ class SimpleTable(object):
 
     def _get_maxes(self):
         array = [self.header] + self.rows
-        # TODO: table collapses when only header exists
-        return [max(len(str(s)) for s in m if s is not None) for m in map(None, *array)]
+        return [max(len(str(s)) for s in it) for it in izip_longest(*array, fillvalue='')]
 
     def _print_row(self, row):
         maxes = self._get_maxes()
-        line = []
-        for i, m in enumerate(maxes):
-            if i == 0:
-                line.append('|')
-            if len(row) > i:
-                line.append((' {0: <%d} ' % m).format(row[i]))
-            else:
-                line.append(' ' * (m + 2))
-            line.append('|')
-        return ''.join(line)
+        return '| ' + ' | '.join([('{0: <%d}' % m).format(r) for r, m in izip_longest(row, maxes, fillvalue='')]) + ' |'
 
     def _print_header(self):
         return self._print_row(self.header)
 
     def _print_border(self):
-        return '+' + '+'.join(['-' * (m + 2) for m in self._get_maxes()]) + '+'
+        maxes = self._get_maxes()
+        return '+' + '+'.join(['-' * (m + 2) for m in maxes]) + '+'
 
-    def print_table(self):
+    def _print_table(self):
         lines = []
         if self.header:
             lines.append(self._print_border())
@@ -51,7 +44,10 @@ class SimpleTable(object):
         for row in self.rows:
             lines.append(self._print_row(row))
         lines.append(self._print_border())
-        # Print table
+        return lines
+
+    def print_table(self):
+        lines = self._print_table()
         for line in lines:
             print(line)
 
