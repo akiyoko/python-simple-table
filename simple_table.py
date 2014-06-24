@@ -20,41 +20,51 @@ class SimpleTable(object):
         self.header = header or ()
         self.rows = rows or []
 
-    def _get_maxes(self):
-        array = [self.header] + self.rows
-        return [max(len(str(s)) for s in it) for it in izip_longest(*array, fillvalue='')]
+    def set_header(self, header):
+        self.header = header
 
-    def _print_row(self, row):
-        maxes = self._get_maxes()
+    def add_row(self, row):
+        self.rows.append(row)
+
+    def _calc_maxes(self):
+        array = [self.header] + self.rows
+        return [max(len(str(s)) for s in ss) for ss in izip_longest(*array, fillvalue='')]
+
+    def _get_printable_row(self, row):
+        maxes = self._calc_maxes()
         return '| ' + ' | '.join([('{0: <%d}' % m).format(r) for r, m in izip_longest(row, maxes, fillvalue='')]) + ' |'
 
-    def _print_header(self):
-        return self._print_row(self.header)
+    def _get_printable_header(self):
+        return self._get_printable_row(self.header)
 
-    def _print_border(self):
-        maxes = self._get_maxes()
-        return '+' + '+'.join(['-' * (m + 2) for m in maxes]) + '+'
+    def _get_printable_border(self):
+        maxes = self._calc_maxes()
+        return '+-' + '-+-'.join(['-' * m for m in maxes]) + '-+'
 
-    def _print_table(self):
+    def get_table(self):
         lines = []
         if self.header:
-            lines.append(self._print_border())
-            lines.append(self._print_header())
-        lines.append(self._print_border())
+            lines.append(self._get_printable_border())
+            lines.append(self._get_printable_header())
+        lines.append(self._get_printable_border())
         for row in self.rows:
-            lines.append(self._print_row(row))
-        lines.append(self._print_border())
+            lines.append(self._get_printable_row(row))
+        lines.append(self._get_printable_border())
         return lines
 
     def print_table(self):
-        lines = self._print_table()
+        lines = self.get_table()
         for line in lines:
             print(line)
 
 
 if __name__ == '__main__':
-    table = SimpleTable(('Header 1', 'Header 2', 'Header 3'), [('aaa', 'bbb', 'ccc'), ('aaaaaaaaaaaa', 'bb', 'ccccc'), ('a', 'b')])
+    #table = SimpleTable(('Header 1', 'Header 2', 'Header 3'), [('aaa', 'bbb', 'ccc'), ('aaaaaaaaaaaa', 'bb', 'ccccc'), ('a', 'b')])
     #table = SimpleTable(('Header 1', 'Header 2', 'Header 3'), [])
     #table = SimpleTable(None, [('aaa', 'bbb', 'ccc'), ('aaaaaaaaaaaa', 'bb', 'ccccc'), ('a', 'b')])
-    #table = SimpleTable()
+    table = SimpleTable()
+    table.set_header(('Header 1', 'Header 2', 'Header 3'))
+    table.add_row(('aaa', 'bbb', 'ccc'))
+    table.add_row(('aaaaaaaaaaaa', 'bb', 'ccccc'))
+    table.add_row(('a', 'b'))
     table.print_table()
