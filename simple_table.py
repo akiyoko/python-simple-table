@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from itertools import izip_longest
+from unicodedata import east_asian_width
 
 
 class SimpleTable(object):
@@ -28,11 +29,16 @@ class SimpleTable(object):
 
     def _calc_maxes(self):
         array = [self.header] + self.rows
-        return [max(len(str(s)) for s in ss) for ss in izip_longest(*array, fillvalue='')]
+        return [max(self._unicode_width(s) for s in ss) for ss in izip_longest(*array, fillvalue='')]
+
+    def _unicode_width(self, s, width={'F': 2, 'H': 1, 'W': 2, 'Na': 1, 'A': 2, 'N': 1}):
+        s = unicode(s)
+        return sum(width[east_asian_width(c)] for c in s)
 
     def _get_printable_row(self, row):
         maxes = self._calc_maxes()
-        return '| ' + ' | '.join([('{0: <%d}' % m).format(r) for r, m in izip_longest(row, maxes, fillvalue='')]) + ' |'
+        #return '| ' + ' | '.join([('{0: <%d}' % m).format(r) for r, m in izip_longest(row, maxes, fillvalue='')]) + ' |'
+        return '| ' + ' | '.join([unicode(r) + ' ' * (m - self._unicode_width(r)) for r, m in izip_longest(row, maxes, fillvalue='')]) + ' |'
 
     def _get_printable_header(self):
         return self._get_printable_row(self.header)
@@ -65,6 +71,6 @@ if __name__ == '__main__':
     table = SimpleTable()
     table.set_header(('Header 1', 'Header 2', 'Header 3'))
     table.add_row(('aaa', 'bbb', 'ccc'))
-    table.add_row(('aaaaaaaaaaaa', 'bb', 'ccccc'))
+    table.add_row((u'ああああああ', 'bb', 'ccccc'))
     table.add_row(('a', 'b'))
     table.print_table()
